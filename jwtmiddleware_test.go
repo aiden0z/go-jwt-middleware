@@ -3,16 +3,16 @@ package jwtmiddleware
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/codegangsta/negroni"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
-	"github.com/gorilla/mux"
-	. "github.com/smartystreets/goconvey/convey"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/codegangsta/negroni"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 // defaultAuthorizationHeaderName is the default header name where the Auth
@@ -91,7 +91,7 @@ func TestAuthenticatedRequest(t *testing.T) {
 			}
 			responseString := string(responseBytes)
 			// check that the encoded data in the jwt was properly returned as json
-			So(strings.TrimSpace(responseString), ShouldEqual, "Expected RS256 signing method but token specified HS256")
+			So(strings.TrimSpace(responseString), ShouldEqual, "Error validating token algorithm: Expected RS256 signing method but token specified HS256")
 		})
 	})
 }
@@ -104,7 +104,7 @@ func makeAuthenticatedRequest(method string, url string, c map[string]interface{
 	r, _ := http.NewRequest(method, url, nil)
 	if c != nil {
 		token := jwt.New(jwt.SigningMethodHS256)
-		token.Claims = c
+		token.Claims = jwt.MapClaims(c)
 		// private key generated with http://kjur.github.io/jsjws/tool_jwt.html
 		s, e := token.SignedString(privateKey)
 		if e != nil {
@@ -197,9 +197,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 // in the token as json -> {"text":"bar"}
 func protectedHandler(w http.ResponseWriter, r *http.Request) {
 	// retrieve the token from the context (Gorilla context lib)
-	u := context.Get(r, userPropertyName)
-	user := u.(*jwt.Token)
-	respondJson(user.Claims["foo"].(string), w)
+
+	ctx := r.Context()
+	user := ctx.Value(userPropertyName).(*jwt.Token)
+
+	claims, _ := user.Claims.(jwt.MapClaims)
+
+	respondJson(claims["foo"].(string), w)
 }
 
 // Response quick n' dirty Response struct to be encoded as json
