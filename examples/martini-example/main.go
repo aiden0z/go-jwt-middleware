@@ -2,10 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-martini/martini"
-	"net/http"
 )
 
 func main() {
@@ -24,8 +25,10 @@ func StartServer() {
 		SigningMethod: jwt.SigningMethodHS256,
 	})
 
+	jwtHandler := jwtMiddleware.Handler(http.HandlerFunc(SecuredPingHandler))
+
 	m.Get("/ping", PingHandler)
-	m.Get("/secured/ping", jwtMiddleware.CheckJWT, SecuredPingHandler)
+	m.Get("/secured/ping", jwtHandler)
 
 	m.Run()
 }

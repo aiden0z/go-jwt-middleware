@@ -7,7 +7,7 @@ This module lets you authenticate HTTP requests using JWT tokens in your Go Prog
 ## Key Features
 
 * Ability to **check the `Authorization` header for a JWT**
-* **Decode the JWT** and set the content of it to the request context
+* **Decode the JWT** and set the content of it to the request standard context, which supported in golang 1.7
 
 ## Installing
 
@@ -29,11 +29,11 @@ import (
 
   "github.com/auth0/go-jwt-middleware"
   "github.com/dgrijalva/jwt-go"
-  "github.com/gorilla/context"
 )
 
 var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-  user := context.Get(r, "user")
+  ctx := r.Context()
+  user := context.Value("user")
   fmt.Fprintf(w, "This is an authenticated request")
   fmt.Fprintf(w, "Claim content:\n")
   for k, v := range user.(*jwt.Token).Claims {
@@ -70,12 +70,12 @@ import (
   "github.com/auth0/go-jwt-middleware"
   "github.com/codegangsta/negroni"
   "github.com/dgrijalva/jwt-go"
-  "github.com/gorilla/context"
   "github.com/gorilla/mux"
 )
 
 var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-  user := context.Get(r, "user")
+  ctx := r.Context()
+  user := context.Value("user")
   fmt.Fprintf(w, "This is an authenticated request")
   fmt.Fprintf(w, "Claim content:\n")
   for k, v := range user.(*jwt.Token).Claims {
